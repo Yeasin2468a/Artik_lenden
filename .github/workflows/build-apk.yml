@@ -17,14 +17,8 @@ jobs:
           mkdir project
           unzip -q arthik_lenden_apk_ready.zip -d project
 
-          echo "===== PROJECT STRUCTURE ====="
-          find project -maxdepth 5 -type f | sort | head -300
-
-          echo "===== PUBSPEC ====="
-          find project -name pubspec.yaml -print
-
-          echo "===== GRADLE FILES ====="
-          find project -path "*/android/*" \( -name "build.gradle" -o -name "build.gradle.kts" \) -print
+          echo "===== PROJECT FILES ====="
+          find project -maxdepth 4 -type f | sort | head -300
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -41,16 +35,26 @@ jobs:
             exit 1
           fi
 
-          echo "Flutter project: $PROJECT_DIR"
+          echo "Flutter project found at: $PROJECT_DIR"
           echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
 
-      - name: Flutter Pub Get
+      - name: Generate Android platform
         working-directory: ${{ env.PROJECT_DIR }}
-        run: flutter pub get
+        run: |
+          flutter create --platforms=android,web .
+          echo "===== ANDROID FILES ====="
+          find android -maxdepth 3 -type f | sort | head -200
+
+      - name: Get dependencies
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: |
+          flutter clean
+          flutter pub get
 
       - name: Build APK
         working-directory: ${{ env.PROJECT_DIR }}
-        run: flutter build apk --release
+        run: |
+          flutter build apk --release
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
